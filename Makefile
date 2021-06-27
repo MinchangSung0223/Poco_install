@@ -6,8 +6,8 @@ CC=g++
 CFLAGS=-g -Wall
 
 server: TCPServer.cpp
-  $(CC) $(LDLIBS) -o $@ $< $(LDFLAGS)
+	$(CC) $(LDLIBS) -o $@ $< $(LDFLAGS)
 client: TCPClient.cpp
-  $(CC) $(LDLIBS) -o $@ $< $(LDFLAGS)
+	$(CC) $(LDLIBS) -o $@ $< $(LDFLAGS)
 clean:
-  rm server client
+	rm server client
