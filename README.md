@@ -7,3 +7,7 @@ wget http://pocoproject.org/releases/poco-1.7.4/poco-1.7.4.tar.gz
 make -j16
 make install
 ```
+
+```bash
+g++ -I/usr/local/include -L/usr/local/lib -o poco_test test.cpp -lPocoFoundation -lPocoUtil
+```
