@@ -10,4 +10,8 @@ make install
 
 ```bash
 g++ -I/usr/local/include -L/usr/local/lib -o poco_test test.cpp -lPocoFoundation -lPocoUtil
+g++  -I/usr/local/include -L/usr/local/lib -o server TCPServer.cpp -lPocoFoundation -lPocoUtil -lPocoNet
+g++  -I/usr/local/include -L/usr/local/lib -o client TCPClient.cpp -lPocoFoundation -lPocoUtil -lPocoNet
+
+
 ```
