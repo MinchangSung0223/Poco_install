@@ -1,6 +1,6 @@
 all:server client
 LDLIBS= -I/usr/local/include -L/usr/local/lib
-LDFLAGS= -lPocoFoundation -lPocoUtil -lPocoNet
+LDFLAGS= -lPocoFoundation -lPocoUtil -lPocoNet -fpermissive
 
 CC=g++
 CFLAGS=-g -Wall

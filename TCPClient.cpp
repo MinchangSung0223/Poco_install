@@ -1,63 +1,114 @@
+/* 
+* TCP Example For KIST Monkey Experiment 
+* TCP_HYUSPA.cpp
+* Created on: Mar 2, 2020
+*     Author: Sunhong Kim
+*/
+
 #include "Poco/Net/Net.h"
 #include "Poco/Net/StreamSocket.h"
 #include "Poco/Net/SocketAddress.h"
-#include <stdio.h>
-#include <string.h>
-#include <iostream>
+#include "Poco/Dynamic/Var.h"
+#include "Poco/Exception.h"
+#include "Poco/Timer.h"
+#include "Poco/Stopwatch.h"
+#include "Poco/Thread.h"
 #include "Poco/DateTime.h"
 #include "Poco/Timespan.h"
- 
-const Poco::UInt16 PORT = 32452;
- 
-int main()
+#include "Poco/NumericString.h"
+#include <iostream>
+#include <time.h>
+
+using namespace Poco;
+using namespace Poco::Dynamic;
+using Poco::Net::SocketAddress;
+using Poco::Net::StreamSocket;
+using Poco::Net::Socket;
+using Poco::Timer;
+using Poco::TimerCallback;
+using Poco::Thread;
+using Poco::Stopwatch;
+using namespace std;
+
+//const std::string hostname = "127.0.0.1"; //localhost IP Address
+//const std::string hostname = "192.168.0.39"; //STEP2 IP Address 
+const std::string hostname = "192.168.1.2"; //STEP2 IP Address 
+
+//const std::string hostname = "192.168.0.100"; //STEP2 IP Address Monkey
+//const std::string hostname = "192.168.1.18"; //STEP2 IP Address Tensegrity
+//const std::string hostname = "192.168.0.122"; //STEP2 IP Address Tensegrity
+const Poco::UInt16 PORT = 9911;
+
+enum {
+	SIZE_HEADER = 52,
+	SIZE_COMMAND = 4,
+	SIZE_HEADER_COMMAND = 56,
+	SIZE_DATA_MAX = 200,
+	SIZE_DATA_ASCII_MAX = 32
+};
+
+
+union Data
 {
-    Poco::Net::StreamSocket ss;
- 
-    try
-    {
-        std::cout << "서버에 연결 시도..." << std::endl;
- 
-        // 넌블록킹모드로 접속 요청을 하고 바로 다음 루틴으로 넘어간다.
-        ss.connect(Poco::Net::SocketAddress("localhost", PORT));
- 
-        Poco::Timespan timeout(1, 0);    // 1 초
- 
-        while (ss.poll(timeout, Poco::Net::Socket::SELECT_WRITE) == false)
-        {
-            std::cout << "서버에 연결 중..." << std::endl;
-        }
-        std::cout << "서버에 연결 완료" << std::endl;
- 
-        // 서버에 메시지 보내기
-        char szMessage[] = "Send Mesage From Client";
-        auto nMsgLen = (int)strnlen(szMessage, 128 - 1);
- 
-        ss.sendBytes(szMessage, nMsgLen);
+	unsigned char byte[SIZE_DATA_MAX];
+	float value[9];
+};
+
+int main(int argc, char **argv)
+{
+
+    float base_x = atof(argv[1]);
+    float base_y = atof(argv[2]);
+    float base_yaw = atof(argv[3]);
+    float joint[6];
+    for(int j = 0;j<6;j++)
+	    joint[j] = atof(argv[4+j]);
+
     
-        // 서버로부터 메시지를 받을 때까지 대기 중..
-        Poco::DateTime now1;
-        std::cout << "poll 시작: " << now1.second() << std::endl;
- 
-        while (ss.poll(timeout, Poco::Net::Socket::SELECT_READ) == false)
-        {
-            std::cout << "receive 대기 중..." << std::endl;
-        }
- 
-        Poco::DateTime now2;
-        std::cout << "poll 완료: " << now2.second() << std::endl;
- 
-        char buffer[256] = { 0 };
-        auto len = ss.receiveBytes(buffer, sizeof(buffer));
-        std::cout << "서버로부터 받은 메시지: " << buffer << std::endl;
- 
-        // 접속 종료
-        ss.close();
-    }
-    catch (Poco::Exception& exc)
-    {
-        std::cout << "서버 접속 실패: " << exc.displayText() << std::endl;
-    }
- 
-    getchar();
-    return 0;
+    
+	StreamSocket ss;
+
+	Data data;
+	unsigned char writeBuff[1024];
+	
+	try
+	{
+		cout << "Trying to connect server..." << endl;
+		ss.connect(SocketAddress(hostname, PORT));
+
+		Timespan timeout(1, 0);
+		while (ss.poll(timeout, Poco::Net::Socket::SELECT_WRITE) == false)
+		{
+			cout << "Connecting to server..." << endl;
+		}
+		cout << "Complete to connect server" << endl;
+		cout << "-----Send Data------" << endl;
+		try {
+			data.value[0]=base_x;
+			data.value[1]=base_y;
+			data.value[2]=base_yaw;
+			for(int j = 0;j<6;j++)
+				data.value[3+j]=joint[j];
+	
+			
+			for(int j = 0;j<9;j++)
+	                       cout<<data.value[j]<<endl;
+                       cout << "-------------------" << endl;
+			memcpy(writeBuff, data.byte, SIZE_DATA_MAX);
+			ss.sendBytes(writeBuff, 1024);
+		}
+		catch (int expn) {
+			cout << "[ERROR] : Please check the Motion" << endl;
+			return 0;
+		}
+		cout << endl;
+		ss.close();
+	}
+	catch (Poco::Exception& exc)
+	{
+		cout << "Fail to connect server..." << exc.displayText() << endl;
+	}
+	return 0;
 }
+
+

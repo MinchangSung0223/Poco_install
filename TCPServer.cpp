@@ -5,8 +5,22 @@
 #include <iostream>
 #include "Poco/Net/ServerSocket.h"
 #include "Poco/Net/SocketAddress.h"
- 
-const Poco::UInt16 PORT = 32452;
+ using namespace std;
+const Poco::UInt16 PORT = 9911;
+enum {
+	SIZE_HEADER = 52,
+	SIZE_COMMAND = 4,
+	SIZE_HEADER_COMMAND = 56,
+	SIZE_DATA_MAX = 200,
+	SIZE_DATA_ASCII_MAX = 32
+};
+
+union Data
+{
+	unsigned char byte[SIZE_DATA_MAX];
+	float value[9];
+};
+
 
 int main()
 {
@@ -23,7 +37,7 @@ int main()
  
     // 서버 소켓을 리스트에 넣어준다.
     connectedSockList.push_back(server_sock);
- 
+    Data data_rev;
     while (true)
     {
         // 읽기 이벤트를 조사할 소켓 리스트
@@ -59,19 +73,20 @@ int main()
             }
             else
             {
-                char buffer[256] = { 0 };
-                
+                char buffer[1024] = { 0 };
+		
                 // 클라이언트로부터 받은 메시지를 그래도 클라이언트에게 다시 보내준다.
-                auto n = ((Poco::Net::StreamSocket*)&readSock)->receiveBytes(buffer, sizeof(buffer));
+                auto n = ((Poco::Net::StreamSocket*)&readSock)->receiveBytes(buffer, 1024);
+
                 if (n > 0)
                 {
-                    std::cout << "클라이언트에서 받은 메시지: " << buffer << std::endl;
- 
-                    char szSendMessage[256] = { 0 };
-                    snprintf(szSendMessage, 256 - 1, "Re:%s", buffer);
-                    int nMsgLen = strnlen(szSendMessage, 256 - 1);
- 
-                    ((Poco::Net::StreamSocket*)&readSock)->sendBytes(szSendMessage, nMsgLen);
+                    std::cout << "클라이언트에서 받은 메시지: " <<buffer << std::endl;
+                    memcpy(data_rev.byte, buffer, SIZE_DATA_MAX);
+                    cout<<"base_x : \t"<<data_rev.value[0]<<"\n"<<"base_y : \t"<<data_rev.value[1]<<"\n"<<"base_yaw : \t"<<data_rev.value[2]<<endl;
+                    for(int i =0;i<6;i++){
+                    	cout<<"joint "<<i<<" : \t"<<data_rev.value[i+2]<<endl;
+		     }                    
+                    std::cout << "-------------------------" <<std::endl;
                 }
                 else
                 {
