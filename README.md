@@ -6,6 +6,7 @@ wget http://pocoproject.org/releases/poco-1.7.4/poco-1.7.4.tar.gz
 ./configure --omit=Data/ODBC,Data/MySQL
 make -j16
 make install
+ldconfig
 ```
 
 ```bash
